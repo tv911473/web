@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Vendt, web dev 23</title>
+</head>
+<body>
+	<img src="/banner/banner.png" alt="Veebiprogrammeerimise kursuse bänner">
+	<h1><%=h1%></h1>
+	<ul>
+		<!-- Teeme ejs tsykkli mis kaib labi massiivi wisom-->
+		<% names.forEach(function(name){ %>
+			<li><%=name%></li>
+		<% }); %>
+	</ul>
+	<hr>
+	<ul>
+		<li><a href="/">Avalehele</a></li>
+	</ul>
+	<hr>
+</body>
+</html>
