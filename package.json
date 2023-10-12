@@ -1,0 +1,28 @@
+{
+  "name": "vp2023",
+  "version": "1.0.0",
+  "description": "veebiprogrammeerimise kursuse projekt",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://tv911473@github.com/tv911473/web.git"
+  },
+  "keywords": [
+    "WebDev",
+    "NodeJs",
+    "TLU"
+  ],
+  "author": "Taavi Vendt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tv911473/web/issues"
+  },
+  "homepage": "https://github.com/tv911473/web#readme",
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.18.2"
+  }
+}
