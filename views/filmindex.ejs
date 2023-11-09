@@ -6,15 +6,11 @@
 </head>
 <body>
 	<img src="/banner/banner.png" alt="Veebiprogrammeerimise kursuse bänner">
-	<h1><%=h1%></h1>
+	<h1>Eesti film</h1>
 	<ul>
-		<!-- Teeme ejs tsykkli mis kaib labi massiivi wisom-->
-		<% wisdom.forEach(function(sentence){ %>
-			<li><%=sentence%></li>
-		<% }); %>
-	</ul>
-	<hr>
-	<ul>
+		<li><a href="/eestifilm/filmiloend">Eesti filmide loend</a></li>
+		<li><a href="/eestifilm/addfilmperson">Eesti filmitegelase lisamine</a></li>
+		<li><a href="/eestifilm/singlemovie">Vali film</a></li>
 		<li><a href="/">Avalehele</a></li>
 	</ul>
 	<hr>
