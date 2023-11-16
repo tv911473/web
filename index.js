@@ -4,13 +4,18 @@ const app = express();
 const mysql = require('mysql2');
 const timeInfo = require('./datetime_func');
 const dbInfo = require('../../vp23config');
-const bodyparser =require('body-parser');
-
+const bodyparser = require('body-parser');
+const dataBase = ('if23_taavi_ve')
+// fotode laadimiseks
+const multer = require('multer');
+// seadistame vahevara (middleware), mis määrab üleslaadimise kataloogi
+const upload = multer({dest: './public/gallery/orig/'});
+const sharp =require('sharp');
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
-app.use(bodyparser.urlencoded({extended: false}));
-
+// järgnev kui ainult text siis "false", kui ka pilte ja muud siis "true"
+app.use(bodyparser.urlencoded({extended: true}));
 
 // loon andmebaasiga yhenduse
 const conn = mysql.createConnection({
@@ -54,7 +59,7 @@ app.get('/listnames', (req, res)=>{
         }
     });
 });
-
+/*
 app.get('/eestifilm', (req, res)=>{
     res.render('filmindex');
 });
@@ -97,9 +102,24 @@ app.post('/eestifilm/addfilmperson', (req, res)=>{
     });
 });
 app.get('/eestifilm/singlemovie', (req, res)=>{
-    res.render('singlemovie');
-});
+    let sqlCount = 'SELECT COUNT(id) FROM movie';
+    let movieID = req.params.id;
 
+    conn.query(sqlCount,[movieID] , (err, countResult)=>{
+        if (err){
+            res.render('singlemovie', {singlemovie: countResult});
+            //conn.end();
+            throw err;
+        }
+        else {
+            //console.log(result);
+            const movieCount = countResult[0].movieCount;
+            res.render('filmindex', {movieCount});
+            //conn.end();
+        }
+    });
+});
+*/
 app.get('/news', (req, res)=> {
     res.render('news');
 })
@@ -168,22 +188,42 @@ app.get('/news/read/:id', (req, res)=> {
 //     res.send('Tahame uudist mille id on: ' + req.params.id);
 // })
 
-app.get('/eestifilm/singlemovie', (req, res)=>{
-    let sqlCount = 'SELECT COUNT(id) FROM movie';
+app.get('/photoupload', (req, res)=>{
+    res.render('photoupload');
+});
 
-    conn.query(sqlCount, (err, countResult)=>{
-        if (err){
-            res.render('singlemovie', {singlemovie: countResult});
-            //conn.end();
+app.post('/photoupload', upload.single('photoInput'), (req, res)=>{
+    let notice = '';
+    console.log(req.file);
+    console.log(req.body);
+    const fileName = 'vp_' + Date.now() + '.jpg';
+    //fs.rename(req.file.path, './public/gallery/orig/' + req.file.originalname, (err)=>{
+    fs.rename(req.file.path, './public/gallery/orig/' + fileName, (err)=>{
+        console.log('faili laadimisel viga' + err);
+    });
+    // loome kaks väiksema mõõduga pildivarianti
+    sharp('./public/gallery/orig/' + fileName).resize(100,100).jpeg({quality: 90}).toFile('./public/gallery/thumbs/' + fileName);
+
+    sharp('./public/gallery/orig/' + fileName).resize(800,600).jpeg({quality: 90}).toFile('./public/gallery/normal/' + fileName);
+
+    // foto andmed andmetabelisse
+    let sql = 'INSERT INTO vpgallery (filename, originalname, alttext, privacy, userid) VALUES(?,?,?,?,?)';
+    const userid = 1;
+    conn.query(sql, [fileName, req.file.originalname, req.body.altInput, req.body.privacyInput, userid], (err, result)=>{
+        if(err) {
+            notice = 'Foto salvestamine ebaõnnestus';
+            res.render('photoupload', {notice: notice});
             throw err;
         }
         else {
-            //console.log(result);
-            const movieCount = countResult[0].movieCount;
-            res.render('filmindex', {movieCount});
-            //conn.end();
+            notice = 'Foto ' + req.file.originalname + ' laeti üles';
+            res.render('photoupload', {notice: notice});
         }
     });
+});
+app.get('/photogallery', (req, res)=>{
+    // andmebaasist tuleb lugeda foto id andmebaasist
+    res.render('photogallery');
 });
 
 app.listen(5126);
