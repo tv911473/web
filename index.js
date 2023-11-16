@@ -108,21 +108,65 @@ app.get('/news/add', (req, res)=> {
     res.render('addnews');
 })
 
+app.post('/news/add', (req, res)=>{
+    //res.render('addfilmperson');
+    //res.send('req.body');   // veebi kontroll
+    let notice = ''
+    let sql = 'INSERT INTO vpnews (title, content, expire, userid) VALUES (?,?,?,1)';
+    conn.query(sql, [req.body.titleInput, req.body.contentInput, req.body.expireInput], (err, result)=>{
+        if (err) {
+            notice = 'Andmete salvestamine ebaõnnestus';
+            res.render('addnews', {notice: notice});
+            throw err;
+        }
+        else {
+            notice = req.body.titleInput + ' salvestamine õnnestus';
+            res.render('addnews', {notice: notice});
+        }
+    });
+});
+
 app.get('/news/read', (req, res)=> {
-    res.render('readnews');
-})
+    let sql = 'SELECT * FROM vpnews WHERE expire > CURRENT_DATE AND deleted IS NULL ORDER BY id DESC';
+    let sqlResult = [];
+
+    conn.query(sql, (err, result)=>{
+        if (err){
+            res.render('readnews', {newsList: sqlResult});
+            //conn.end();
+            throw err;
+        }
+        else {
+            //console.log(result);
+            res.render('readnews', {newsList: result});
+            //conn.end();
+        }
+    });
+});
 
 app.get('/news/read/:id', (req, res)=> {
     //res.render('readnews');
-    res.send('Tahame uudist mille id on: ' + req.params.id);
-})
+    let newSQL = 'SELECT * FROM vpnews WHERE id = ? AND deleted IS NULL';
+    let newID = req.params.id;
+    conn.query(newSQL, [newID], (err, result) => {
+        if (err) {
+            throw err;
+        } else {
+            if (result.length > 0) {
+                res.render('singlenews', {news: result[0]});
+            }else {
+                throw err;
+            }
+        }
+    });
+});
 
-app.get('/news/read/:id/:lang', (req, res)=> {
-    //res.render('readnews');
-    console.log(req.params);
-    console.log(req.query);
-    res.send('Tahame uudist mille id on: ' + req.params.id);
-})
+// app.get('/news/read/:id/:lang', (req, res)=> {
+//     //res.render('readnews');
+//     console.log(req.params);
+//     console.log(req.query);
+//     res.send('Tahame uudist mille id on: ' + req.params.id);
+// })
 
 app.get('/eestifilm/singlemovie', (req, res)=>{
     let sqlCount = 'SELECT COUNT(id) FROM movie';

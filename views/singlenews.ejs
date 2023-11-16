@@ -6,15 +6,20 @@
 </head>
 <body>
 	<img src="/banner/banner.png" alt="Veebiprogrammeerimise kursuse bänner">
-	<h1>Uudised</h1>
+	<h1>Uudis</h1>
 	<ul>
+		<li><a href="/news/read">Uudiste lugemine</a></li>
 		<li><a href="/news">Uudiste avaleht</a></li>
 		<li><a href="/">Avalehele</a></li>
 	</ul>
 	<hr>
-	<h2>Viimased uudised</h2>
-	<% newsList.forEach(function(news){ %>
-        <li><a href="/news/read/<%= news.id %>"><%= news.title %></a></li>
-    <% }); %>
+	<h2>Uudis</h2>
+    <% if (news) { %>
+        <h3><%= news.title %></h3>
+        <p>Lisatud: <%= news.added %></p>
+        <p><%= news.content %></p>
+    <% } else { %>
+        <p>News not found</p>
+    <% } %>
 </body>
 </html>
