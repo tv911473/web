@@ -4,25 +4,40 @@
 	<meta charset="utf-8">
 	<title>Vendt, web dev 23</title>
 	<link rel="stylesheet" href="/style/gallery.css">
+	<link rel="stylesheet" href="/style/modal.css">
+	<script src="/script/gallery.js" defer></script>
 </head>
 <body>
 	<img src="/banner/banner.png" alt="veebiprogrammeerimise kursuse bänner">
-	<h1>Fotogalerii</h1>
+	<h1>Photos</h1>
 	<ul>
-		<li><a href="/">Avalehele</a></li>
+		<li><a href="/">Mainpage</a></li>
+		<li><a href="/photoupload">Photo upload</a></li>
 	</ul>
 	<hr>
-	<h2>Galerii</h2>
-	<div class="gallery">
-	
-	
-		<!--Järgneb korduv osa, iga pisipildi jaoks oma-->
-		<div class="thumbgallery">
-			<img src="gallery/thumbs/vp_1700144168979.jpg" alt="Muru" data-filename="vp_1700144168979.jpg" data-id="1" class="thumbs">
-			<p></p> 
+
+	<dialog id="modal" class="modalarea">
+		<span id="modalClose" class="modalclose">&times;</span>	<!--&times; = X(korrutus mark)-->
+		<div class="modalhorizontal">
+			<div class="modalvertical">
+				<p id="modalCaption"></p>
+				<img id="modalImage" src="/pics/empty.png" alt="Galleryphoto">
+			</div>
 		</div>
-	
-	
+	</dialog>
+	<h2>Gallery</h2>
+	<div class="gallery">
+		<!--Järgneb korduv osa, iga pisipildi jaoks oma-->
+		<!--<div class="thumbgallery">
+			<img src="gallery/thumbs/vp_1700145755260.jpg" alt="Karu lilledega" data-filename="vp_1700145755260.jpg" data-id="1" class="thumbs">
+			<p></p> 
+		</div>-->
+		<% photoList.forEach(function(photo){ %>
+			<div class="thumbgallery">
+				<img src="gallery/thumbs/<%=photo.filename%>" alt="<%if(photo.alttext != ''){%><%=photo.alttext%><%}else{%>Galeriipilt<%}%>" data-filename="<%=photo.filename%>" data-id="<%=photo.id%>" class="thumbs">
+				<p></p>
+			</div>
+		<% }); %>
 	</div>
 </body>
 </html>

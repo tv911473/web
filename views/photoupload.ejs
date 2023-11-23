@@ -3,33 +3,37 @@
 <head>
 	<meta charset="utf-8">
 	<title>Vendt, web dev 23</title>
+	<!--script on front end käsk-->
+	<script src="/script/check.js" defer></script>
 </head>
 <body>
 	<img src="/banner/banner.png" alt="Veebiprogrammeerimise kursuse bänner">
-	<h1>Fotod</h1>
+	<h1>Photos</h1>
 	<ul>
 		<li><a href="/">Avalehele</a></li>
+		<li><a href="/photogallery">Photo Gallery</a></li>
 	</ul>
 	<hr>
-	<h2>Fotode üleslaadimine</h2>
+	<h2>Upload</h2>
 	<form method="POST" enctype="multipart/form-data">
-		<label for="photoInput">Vali pildi fail</label>
+		<label for="photoInput">choose photo</label>
 		<input type="file" id="photoInput" name="photoInput" required>
 		<br>
-		<label for="altInput">Foto alternatiivtekst</label>
+		<label for="altInput">Photo text</label>
 		<input type="text" name="altInput" id="altInput" placeholder="Foto alt tekst...">
 		<br>
 		<input type="radio" id="privacyInput1" name="privacyInput" value="1" checked>
-		<label for="privacyInput1">Omanik näeb</label>
+		<label for="privacyInput1">Private</label>
 		<br>
 		<input type="radio" id="privacyInput2" name="privacyInput" value="2" checked>
-		<label for="privacyInput2">Kasutajad näevad</label>
+		<label for="privacyInput2">For users</label>
 		<br>
 		<input type="radio" id="privacyInput3" name="privacyInput" value="3" checked>
-		<label for="privacyInput3">Avalik kõigile</label>
+		<label for="privacyInput3">For all</label>
 		<br>
-		<input type="submit" name="photoSubmit" value="Salvesta">
+		<input type="submit" name="photoSubmit" id="photoSubmit" value="Salvesta">
+		<span id="checkInfo"></span>
 	</form>
-	<p><%=locals.notice || "Ootel"%></p>
+	<p><%=locals.notice || "On hold"%></p>
 </body>
 </html>

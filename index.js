@@ -11,6 +11,7 @@ const multer = require('multer');
 // seadistame vahevara (middleware), mis määrab üleslaadimise kataloogi
 const upload = multer({dest: './public/gallery/orig/'});
 const sharp =require('sharp');
+const async = require('async');
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
@@ -22,7 +23,7 @@ const conn = mysql.createConnection({
     host: dbInfo.configData.host,
     user: dbInfo.configData.user,
     password: dbInfo.configData.password,
-    database: dbInfo.configData.database
+    database: dataBase
 });
 // avalehel
 app.get('/', (req, res)=>{
@@ -59,7 +60,7 @@ app.get('/listnames', (req, res)=>{
         }
     });
 });
-/*
+
 app.get('/eestifilm', (req, res)=>{
     res.render('filmindex');
 });
@@ -68,7 +69,7 @@ app.get('/eestifilm/filmiloend', (req, res)=>{
     let sql = 'SELECT title, production_year, duration FROM movie';
     let sqlResult = [];
 
-    conn.query(sql, (err, result)=>{
+    conn.execute(sql, (err, result)=>{
         if (err){
             res.render('filmlist', {filmlist: sqlResult});
             //conn.end();
@@ -84,12 +85,54 @@ app.get('/eestifilm/filmiloend', (req, res)=>{
 app.get('/eestifilm/addfilmperson', (req, res)=>{
     res.render('addfilmperson');
 });
+
+app.get('/eestifilm/addfilmrelation', (req, res)=>{
+    // kasutades async moodulit paneme mitu tegevust paralleelselt toole
+    // koigepealt loome tegevuste loendi
+    const myQueries = [
+        function(callback){
+            conn.execute('SELECT id, first_name, last_name FROM person', (err, result)=>{
+                if(err){
+                    return callback(err);
+                }
+                else {
+                    return callback(null, result);
+                }
+            });
+
+        },
+        function(callback){
+            conn.execute('SELECT id, title FROM movie', (err, result)=>{
+                if(err){
+                    return callback(err);
+                }
+                else {
+                    return callback(null, result);
+                }
+            });
+
+        } // veel ja jargmine function jne
+    ];
+    // paneme koik tegevused paralleelselt toole, tulemuseks list (array) uhistest tulemustest
+    async.parallel(myQueries, (err, results)=>{
+        if(err){
+            throw err;
+        }
+        else {
+            // siin koik asjad mis on vaja teha
+            // console.log(results);
+        }
+    });
+
+    res.render('addfilmrelation');
+});
+
 app.post('/eestifilm/addfilmperson', (req, res)=>{
     //res.render('addfilmperson');
     //res.send('req.body');   // veebi kontroll
     let notice = ''
     let sql = 'INSERT INTO person (first_name, last_name, birth_date) VALUES (?,?,?)';
-    conn.query(sql, [req.body.firstNameInput, req.body.lastNameInput, req.body.birthDateInput], (err, result)=>{
+    conn.execute(sql, [req.body.firstNameInput, req.body.lastNameInput, req.body.birthDateInput], (err, result)=>{
         if (err) {
             notice = 'Andmete salvestamine ebaõnnestus';
             res.render('addfilmperson', {notice: notice});
@@ -105,7 +148,7 @@ app.get('/eestifilm/singlemovie', (req, res)=>{
     let sqlCount = 'SELECT COUNT(id) FROM movie';
     let movieID = req.params.id;
 
-    conn.query(sqlCount,[movieID] , (err, countResult)=>{
+    conn.execute(sqlCount,[movieID] , (err, countResult)=>{
         if (err){
             res.render('singlemovie', {singlemovie: countResult});
             //conn.end();
@@ -119,7 +162,7 @@ app.get('/eestifilm/singlemovie', (req, res)=>{
         }
     });
 });
-*/
+
 app.get('/news', (req, res)=> {
     res.render('news');
 })
@@ -133,7 +176,7 @@ app.post('/news/add', (req, res)=>{
     //res.send('req.body');   // veebi kontroll
     let notice = ''
     let sql = 'INSERT INTO vpnews (title, content, expire, userid) VALUES (?,?,?,1)';
-    conn.query(sql, [req.body.titleInput, req.body.contentInput, req.body.expireInput], (err, result)=>{
+    conn.execute(sql, [req.body.titleInput, req.body.contentInput, req.body.expireInput], (err, result)=>{
         if (err) {
             notice = 'Andmete salvestamine ebaõnnestus';
             res.render('addnews', {notice: notice});
@@ -150,7 +193,7 @@ app.get('/news/read', (req, res)=> {
     let sql = 'SELECT * FROM vpnews WHERE expire > CURRENT_DATE AND deleted IS NULL ORDER BY id DESC';
     let sqlResult = [];
 
-    conn.query(sql, (err, result)=>{
+    conn.execute(sql, (err, result)=>{
         if (err){
             res.render('readnews', {newsList: sqlResult});
             //conn.end();
@@ -168,7 +211,7 @@ app.get('/news/read/:id', (req, res)=> {
     //res.render('readnews');
     let newSQL = 'SELECT * FROM vpnews WHERE id = ? AND deleted IS NULL';
     let newID = req.params.id;
-    conn.query(newSQL, [newID], (err, result) => {
+    conn.execute(newSQL, [newID], (err, result) => {
         if (err) {
             throw err;
         } else {
@@ -184,7 +227,7 @@ app.get('/news/read/:id', (req, res)=> {
 // app.get('/news/read/:id/:lang', (req, res)=> {
 //     //res.render('readnews');
 //     console.log(req.params);
-//     console.log(req.query);
+//     console.log(req.execute);
 //     res.send('Tahame uudist mille id on: ' + req.params.id);
 // })
 
@@ -209,7 +252,7 @@ app.post('/photoupload', upload.single('photoInput'), (req, res)=>{
     // foto andmed andmetabelisse
     let sql = 'INSERT INTO vpgallery (filename, originalname, alttext, privacy, userid) VALUES(?,?,?,?,?)';
     const userid = 1;
-    conn.query(sql, [fileName, req.file.originalname, req.body.altInput, req.body.privacyInput, userid], (err, result)=>{
+    conn.execute(sql, [fileName, req.file.originalname, req.body.altInput, req.body.privacyInput, userid], (err, result)=>{
         if(err) {
             notice = 'Foto salvestamine ebaõnnestus';
             res.render('photoupload', {notice: notice});
@@ -221,9 +264,20 @@ app.post('/photoupload', upload.single('photoInput'), (req, res)=>{
         }
     });
 });
-app.get('/photogallery', (req, res)=>{
-    // andmebaasist tuleb lugeda foto id andmebaasist
-    res.render('photogallery');
+app.get('/photogallery', (req, res)=> {
+	let photoList = [];
+	let sql = 'SELECT id,filename,alttext FROM vpgallery WHERE privacy > 1 AND deleted IS NULL ORDER BY id DESC';
+	conn.execute(sql, (err,result)=>{
+		if (err){
+            res.render('photogallery', {photoList : photoList});
+			throw err;
+		}
+		else {
+			photoList = result;
+			console.log(result);
+			res.render('photogallery', {photoList : photoList});
+		}
+	});
 });
 
 app.listen(5126);
