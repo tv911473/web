@@ -1,5 +1,5 @@
-const express = require('express');
 const fs = require('fs');
+const express = require('express');
 const app = express();
 const mysql = require('mysql2');
 const timeInfo = require('./datetime_func');
@@ -12,6 +12,13 @@ const multer = require('multer');
 const upload = multer({dest: './public/gallery/orig/'});
 const sharp =require('sharp');
 const async = require('async');
+// paroolide cryptimiseks
+const bcrypt = require('bcrypt');
+// sessiooni jaoks
+const session = require('express-session');
+
+app.use(session({secret: 'minuMingiSalajaneVoti', saveUninitialized: true, resave: true}));
+let mySession;
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
@@ -25,11 +32,102 @@ const conn = mysql.createConnection({
     password: dbInfo.configData.password,
     database: dataBase
 });
+
 // avalehel
 app.get('/', (req, res)=>{
     res.render('index');    //res.render sama mis res.end
 });
 
+// kasutaja sisse logimine
+app.post('/', (req, res)=>{
+    let notice = 'Sisesta oma andmed';
+    if(!req.body.emailInput || !req.body.passwordInput){
+        console.log('halvasti on')
+    }
+    else {
+        console.log('hasti on')
+        let sql = 'SELECT password FROM vpusers WHERE email = ?';
+        conn.execute(sql, [req.body.emailInput], (err, result)=>{
+            if(err) {
+                notice = 'Tehniline viga';
+                console.log(notice);
+                res.render('index', {notice: notice});
+            }
+            else {
+                if(result[0] != null){
+                    console.log(result[0].password);
+                    bcrypt.compare(req.body.passwordInput, result[0].password, (err, compareresult)=>{
+                        if(err){
+                            throw err;
+                        }
+                        else {
+                            if(compareresult){
+                                mySession = req.session;
+                                mySession.userName = req.body.emailInput;
+                            
+
+                                notice = mySession.userName + 'on sisse logitud';
+                                res.render('index', {notice: notice});
+                            }
+                            else {
+                                console.log('ei saa sisse');
+                                res.render('index', {notice: notice});
+                            }
+                        }
+                    });
+                }
+                else {
+                    notice = 'Kasutajat ei leidu';
+                    console.log(notice);
+                    res.render('index', {notice: notice});
+                }
+            }
+        });
+        //res.render('index', {notice: notice});
+    }
+});
+app.get('/logout', (req, res)=>{
+    req.session.destroy();
+    mySession = null;
+    console.log('Logi valja');
+    res.redirect('/');
+});
+// kasutaja konto loomine
+app.get('/signup', (req, res)=>{
+    res.render('signup');
+});
+
+app.post('/signup', (req, res)=>{
+    let notice = 'Ootan andmeid';
+    console.log(req.body);
+    if(!req.body.firstNameInput || !req.body.lastNameInput || !req.body.genderInput || !req.body.birthInput || !req.body.emailInput || req.body.passwordInput.length < 8 || req.body.passwordInput !== req.body.confirmPasswordInput){
+        console.log('Andmed puuduvad voi ebakorrektne');
+        notice = 'Andmed puuduvad voi ebakorrektne';
+        res.render ('signup', {notice: notice});
+    }
+    else {
+        console.log('OK');
+            // "cost" 10 - tavaliselt 5 - 15: mitu iteratsiooni tehatkse soola tegemisel
+        bcrypt.genSalt(10, (err, salt)=>{
+            bcrypt.hash(req.body.passwordInput, salt, (err, pswdhash)=>{
+                let sql = 'INSERT INTO vpusers (firstname, lastname, birthdate, gender, email, password) VALUES(?,?,?,?,?,?)';
+                conn.execute(sql, [req.body.firstNameInput, req.body.lastNameInput, req.body.birthInput, req.body.genderInput, req.body.emailInput, pswdhash], (err, result)=>{
+                    if (err){
+                        console.log(err);
+                        notice = 'kasutajat ei loodud';
+                        res.render ('signup', {notice: notice});
+                    }
+                    else {
+                        console.log('Kasutaja loodud');
+                        notice = 'Kasutaja ' + req.body.emailInput + ' edukalt loodud';
+                        res.render ('signup', {notice: notice});
+                    }
+                });
+            });
+        });
+    }
+    // res.render('signup');
+});
 app.get('/timenow', (req, res)=>{
     const dateNow = timeInfo.dateOfTodayEN();
     const timeNow = timeInfo.timeOfToday();
@@ -86,6 +184,24 @@ app.get('/eestifilm/addfilmperson', (req, res)=>{
     res.render('addfilmperson');
 });
 
+app.post('/eestifilm/addfilmperson', (req, res)=>{
+    //res.render('addfilmperson');
+    //res.send('req.body');   // veebi kontroll
+    let notice = ''
+    let sql = 'INSERT INTO person (first_name, last_name, birth_date) VALUES (?,?,?)';
+    conn.execute(sql, [req.body.firstNameInput, req.body.lastNameInput, req.body.birthDateInput], (err, result)=>{
+        if (err) {
+            notice = 'Andmete salvestamine ebaõnnestus';
+            res.render('addfilmperson', {notice: notice});
+            throw err;
+        }
+        else {
+            notice = req.body.firstNameInput + ' ' + req.body.lastNameInput + ' salvestamine õnnestus';
+            res.render('addfilmperson', {notice: notice});
+        }
+    });
+});
+
 app.get('/eestifilm/addfilmrelation', (req, res)=>{
     // kasutades async moodulit paneme mitu tegevust paralleelselt toole
     // koigepealt loome tegevuste loendi
@@ -111,6 +227,17 @@ app.get('/eestifilm/addfilmrelation', (req, res)=>{
                 }
             });
 
+        },
+        function(callback){
+            conn.execute('SELECT id, position_id FROM person_in_movie', (err, result)=>{
+                if(err){
+                    return callback(err);
+                }
+                else {
+                    return callback(null, result);
+                }
+            });
+
         } // veel ja jargmine function jne
     ];
     // paneme koik tegevused paralleelselt toole, tulemuseks list (array) uhistest tulemustest
@@ -127,38 +254,22 @@ app.get('/eestifilm/addfilmrelation', (req, res)=>{
     res.render('addfilmrelation');
 });
 
-app.post('/eestifilm/addfilmperson', (req, res)=>{
-    //res.render('addfilmperson');
-    //res.send('req.body');   // veebi kontroll
-    let notice = ''
-    let sql = 'INSERT INTO person (first_name, last_name, birth_date) VALUES (?,?,?)';
-    conn.execute(sql, [req.body.firstNameInput, req.body.lastNameInput, req.body.birthDateInput], (err, result)=>{
-        if (err) {
-            notice = 'Andmete salvestamine ebaõnnestus';
-            res.render('addfilmperson', {notice: notice});
-            throw err;
-        }
-        else {
-            notice = req.body.firstNameInput + ' ' + req.body.lastNameInput + ' salvestamine õnnestus';
-            res.render('addfilmperson', {notice: notice});
-        }
-    });
-});
-app.get('/eestifilm/singlemovie', (req, res)=>{
-    let sqlCount = 'SELECT COUNT(id) FROM movie';
-    let movieID = req.params.id;
+app.get('/eestifilm/singlemovie', (req, res) => {
+    let movieID = req.query.singleMovieInput;
 
-    conn.execute(sqlCount,[movieID] , (err, countResult)=>{
-        if (err){
-            res.render('singlemovie', {singlemovie: countResult});
-            //conn.end();
+    if (movieID === undefined) {
+
+        res.status(400).send('Vajalik filmi id');
+        return;
+    }
+    let sqlCount = 'SELECT COUNT(id) AS movieCount FROM movie WHERE id = ?';
+
+    conn.execute(sqlCount, [movieID], (err, countResult) => {
+        if (err) {
             throw err;
-        }
-        else {
-            //console.log(result);
+        } else {
             const movieCount = countResult[0].movieCount;
-            res.render('filmindex', {movieCount});
-            //conn.end();
+            res.render('singlemovie', { movieCount });
         }
     });
 });
@@ -231,7 +342,7 @@ app.get('/news/read/:id', (req, res)=> {
 //     res.send('Tahame uudist mille id on: ' + req.params.id);
 // })
 
-app.get('/photoupload', (req, res)=>{
+app.get('/photoupload', checkLogin, (req, res)=>{
     res.render('photoupload');
 });
 
@@ -279,5 +390,23 @@ app.get('/photogallery', (req, res)=> {
 		}
 	});
 });
+
+function checkLogin(req, res, next){
+    console.log('kontrollime sisse logimist');
+    if(req.session != null){
+        if(mySession.userName){
+            console.log('seeees');
+            // next annab töö edasi
+            next();
+        }
+        else {
+            console.log('ei ole seeees');
+            res.redirect('/');
+        }
+    }
+    else {
+        res.redirect('/');
+    }
+}
 
 app.listen(5126);

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Vendt, web dev 23</title>
+</head>
+<body>
+	<img src="/banner/banner.png" alt="Veebiprogrammeerimise kursuse bänner">
+	<h1>User account</h1>
+	<ul>
+		<li><a href="/">Avalehele</a></li>
+	</ul>
+	<hr>
+	<h2>Create account</h2>
+	<form method="POST">
+		<label for="firstNameInput">First name</label>
+		<input type="text" name="firstNameInput" id="firstNameInput" placeholder="First name ..." required>
+		<br>
+		<label for="lastNameInput">Last name</label>
+		<input type="text" name="lastNameInput" id="lastNameInput" placeholder="Last name ..." required>
+		<br>
+		<input type="radio" name="genderInput" id="genderInput1" value="1">
+		<label for="genderInput1">Male</label>
+		<input type="radio" name="genderInput" id="genderInput2" value="2">
+		<label for="genderInput2">Female</label>
+		<br>
+		<label for="birthInput">DoB</label>
+		<input type="date" name="birthInput" id="birthInput" required>
+		<br>
+		<label for="emailInput">E-mail (account)</label>
+		<input type="email" name="emailInput" id="emailInput" placeholder="Your e-mail address ..." required>
+		<br>
+		<label for="passwordInput">Password (min 8 marks)</label>
+		<input type="password" name="passwordInput" id="passwordInput" required>
+		<br>
+		<label for="confirmPasswordInput">Confirm password</label>
+		<input type="password" name="confirmPasswordInput" id="confirmPasswordInput" required>
+		<br>
+		<input type="submit" name="accountSubmit" value="Create">
+	</form>
+	<p><%=locals.notice || "Waiting"%></p>
+</body>
+</html>

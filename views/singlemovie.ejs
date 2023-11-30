@@ -12,11 +12,20 @@
 		<li><a href="/">Avalehele</a></li>
 	</ul>
 	<hr>
-	<form method="POST">
-		<label for="movieInput">Filmi number</label>
-		<input type="number" name="titel" id="..." min="1" max="<% ... %>" value="1" request>
+	<h2>Filmide arv: <%= movieCount %></h2>
+	<hr>
+	<form method="GET" action="/eestifilm/singlemovie">
+		<label for="singleMovieInput"> Filmi nr: </label>
+		<input type="number" min="1" max="<%= movieCount.at(-1).id %>" id="singleMovieInput" name="singleMovieInput" value="1">
 		<br>
-		<input type="submit" name="filmSubmit" value="Sisesta">
+		<input type="submit" name="singleSubmit" value="Ok">
 	</form>
+	<hr>
+	<h3>Pealkiri</h3>
+	<p><%= movieCount[0].title %></p>
+	<h3>Loodud</h3>
+	<p><%= movieCount[0].production_year %> aastal</p>
+	<h3>Kestusega</h3>
+	<p><%= movieCount[0].duration %> minutit</p>
 </body>
 </html>

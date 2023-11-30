@@ -14,12 +14,24 @@
 	<ul>
 		<li><a href="/timenow">Aeg praegu</a></li>
 		<li><a href="/wisdom">Vanasõnad</a></li>
-		<li><a href="/listnames">Nimed</a></li>
-		<li><a href="/eestifilm">Filmid</a></li>
+		<!-- <li><a href="/listnames">Nimed</a></li> -->
+		<!-- <li><a href="/eestifilm">Filmid</a></li> -->
 		<li><a href="/news">Uudised</a></li>
-		<li><a href="/photoupload">Photo upload</a></li>
-		<li><a href="/photogallery">Fotogalerii</a></li>
+		<li><a href="/photoupload">Photo upload</a>Users only</li>
+		<li><a href="/photogallery">Photo gallery</a></li>
 	</ul>
+	<hr>
+	<h2>User account</h2>
+	<form method="POST">
+		<label for="emailInput">E-mail (account)</label>
+		<input type="email" name="emailInput" id="emailInput" placeholder="Your e-mail address ..." required>
+		<label for="passwordInput">Password</label>
+		<input type="password" name="passwordInput" id="passwordInput" required>
+		<input type="submit" name="loginSubmit" value="Login">
+		<span><%=locals.notice || "Waiting"%></span>
+	</form>
+	<p>Logout <a href="/logout">here</a></p>
+	<p>New <a href="/signup">account</a></p>
 	<hr>
 </body>
 </html>
